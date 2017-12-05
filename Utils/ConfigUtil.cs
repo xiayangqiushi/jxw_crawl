@@ -14,7 +14,7 @@ namespace JXW.Crawl.Utils
                 {
                     _ConfigRoot= new ConfigurationBuilder()
                     .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json").Build();
+                    .AddJsonFile("appsettings.json",true,true).Build();
                 }
                 return _ConfigRoot;
             }

@@ -159,6 +159,48 @@ namespace JXW.Crawl.Utils
             return retString;
         }
 
+        public static string MultipartHttpPost(string Url, IDictionary<string, string> parameters = null, CookieContainer cookies = null)
+        {
+            string postDataStr = string.Empty;
+            // 写入字符串的Key  
+            var stringKeyHeader = "------WebKitFormBoundaryZCWjeBSXmxfrvStI\r\nContent-Disposition: form-data; name=\"{0}\"" + "\r\n\r\n{1}\r\n";
+            //发送POST数据  
+            if (parameters != null && parameters.Count > 0)
+            {
+                StringBuilder buffer = new StringBuilder();
+                foreach (string key in parameters.Keys)
+                {
+                    buffer.AppendFormat(stringKeyHeader, key, parameters[key]);
+                }
+                buffer.Append("------WebKitFormBoundaryZCWjeBSXmxfrvStI--\r\n");
+                postDataStr = buffer.ToString();
+            }
+
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
+            request.Method = "POST";
+            request.ContentType = "multipart/form-data; boundary=----WebKitFormBoundaryZCWjeBSXmxfrvStI";
+            if (cookies != null) request.CookieContainer = cookies;
+
+            byte[] data = Encoding.UTF8.GetBytes(postDataStr);
+            request.ContentLength = data.Length;
+
+            using (Stream reqStream = request.GetRequestStream())
+            {
+                reqStream.Write(data, 0, data.Length);
+                reqStream.Close();
+            }
+
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            if (cookies != null) response.Cookies = cookies.GetCookies(response.ResponseUri);
+            Stream myResponseStream = response.GetResponseStream();
+            StreamReader myStreamReader = new StreamReader(myResponseStream, Encoding.UTF8);
+            string retString = myStreamReader.ReadToEnd();
+            myStreamReader.Close();
+            myResponseStream.Close();
+
+            return retString;
+        }
+
     }
 
 }
