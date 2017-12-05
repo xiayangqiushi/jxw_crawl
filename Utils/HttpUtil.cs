@@ -95,7 +95,7 @@ namespace JXW.Crawl.Utils
 
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url);
             request.Method = "GET";
-            request.ContentType = "text/html;charset=UTF-8";
+            //request.ContentType = "text/html;charset=UTF-8";
 
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
             Stream myResponseStream = response.GetResponseStream();

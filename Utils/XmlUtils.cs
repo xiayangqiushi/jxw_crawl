@@ -51,8 +51,6 @@ namespace JXW.Crawl.Utils
 
         [XmlElement("PublishDate")]
         public string PublishDate { get; set; }
-
-        public string Classify { get; set; }
     }
 
 }

@@ -21,5 +21,8 @@ namespace JXW.Crawl.DBModel
         public int? topicId { get; set; }
 
         public int downLoadFaild { get; set; }
+
+        [ForeignKey("topicId")]
+        public virtual Topic topic { get; set; }
     }
 }

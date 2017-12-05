@@ -15,12 +15,10 @@ namespace JXW.Crawl.Crawls
     /// <summary>
     /// 技术创新爬虫
     /// </summary>
-    public class CtiscCrawl
+    public class CtiscCrawl:BaseCrawl
     {
-        /// <summary>
-        /// 技术创新站点url
-        /// </summary>
-        private const string CTISC_URL = @"http://www.ctisc.com.cn";
+        //技术创新站点url
+        public CtiscCrawl():base(@"http://www.ctisc.com.cn",@"C:\Attachment\Ctisc\") { }
 
         /// <summary>
         /// 重要通知本地目录
@@ -75,13 +73,18 @@ namespace JXW.Crawl.Crawls
 
         private void Crawl(string xmlPath)
         {
-            List<XmlTopic> list = XmlUtils.LoadTopicListFromDirectory(xmlPath);
+            //创建附件本地存放目录
+            var fileDirectory = AttachmentSaveDic + GetClassifyByPATH(xmlPath);
+            if (!Directory.Exists(fileDirectory))
+            {
+                Directory.CreateDirectory(fileDirectory);
+            }
 
+            List<XmlTopic> list = XmlUtils.LoadTopicListFromDirectory(xmlPath);
             Parallel.ForEach(list, topicXml =>
             {
-                topicXml.Classify = GetClassifyByPATH(xmlPath);
                 var title = topicXml.Title.Trim('\n').Trim();
-                CrawlPageFormXmlTopic(topicXml);
+                CrawlPageFormXmlTopic(topicXml,xmlPath);
                 ThreadConsoleWrite("*");
             });
         }
@@ -122,20 +125,21 @@ namespace JXW.Crawl.Crawls
             Console.WriteLine();
         }
 
-        private void CrawlPageFormXmlTopic(XmlTopic xmltopic)
+        private void CrawlPageFormXmlTopic(XmlTopic xmltopic,string xmlPath)
         {
-            if (string.IsNullOrWhiteSpace(xmltopic.Classify))
+            if (string.IsNullOrWhiteSpace(xmlPath))
             {
                 throw new ArgumentNullException("Classify is Requid");
             }
-            var targetUrl = xmltopic.Link.Substring(0, 1).Equals("/") ? CTISC_URL + xmltopic.Link : CTISC_URL + "/" + xmltopic.Link;
+            var targetUrl = xmltopic.Link.Substring(0, 1).Equals("/") ? WebBaseUrl + xmltopic.Link : WebBaseUrl + "/" + xmltopic.Link;
             var pageHtmlStr = HttpUtil.HttpGet(targetUrl, Encoding.GetEncoding("GB2312"));
             
             var document = new HtmlParser().Parse(pageHtmlStr);
             
             Topic t = new Topic();
-            t.classify = xmltopic.Classify;
-            t.title = xmltopic.Title;
+            t.classify = GetClassifyByPATH(xmlPath);
+            t.title = xmltopic.Title.Trim().Trim('\n').Trim();
+            xmltopic.PublishDate = xmltopic.PublishDate.Trim().Trim('\n').Trim().TrimStart('[').TrimEnd(']');
             DateTime publicDate;
             if(DateTime.TryParse(xmltopic.PublishDate,out publicDate))
             {
@@ -143,11 +147,17 @@ namespace JXW.Crawl.Crawls
             }
 
             var contentDom = document.QuerySelector(".mT10.mB10 .f14-h");
-
             /*获取文章内容html*/
             t.content = contentDom.InnerHtml;
+            /*获取文章附件*/
+            GetAttachment(contentDom,t);
 
-            
+            /*保存到数据库*/
+            using (CtiscContext db = new CtiscContext())
+            {
+                db.Topics.Add(t);
+                db.SaveChanges();
+            }
         }
 
     }

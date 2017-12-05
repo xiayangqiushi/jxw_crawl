@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -27,5 +28,12 @@ namespace JXW.Crawl.DBModel
 
         [Column(TypeName = "date")]
         public DateTime? publicDate { get; set; }
+
+        public Topic()
+        {
+            attachments = new HashSet<Attachment>();
+        }
+
+        public virtual ICollection<Attachment> attachments { get; set; }
     }
 }
